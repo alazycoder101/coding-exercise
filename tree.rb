@@ -1,4 +1,5 @@
 class Node
+  OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
   def initialize(operator, value, left, right)
     @operator = operator
     @value = value
@@ -7,33 +8,15 @@ class Node
   end
 
   def result
-    case @operator
-    when "x"
-      @left.result * @right.result
-    when "÷"
-      @left.result / @right.result
-    when "+"
-      @left.result + @right.result
-    when "-"
-      @left.result - @right.result
-    else
-      @value.to_f
-    end
+    operator = OPERATORS[@operator.to_sym]
+    return @left.result.send(operator, @right.result) if operator
+    @value.to_f
   end
 
   def to_s
-    case @operator
-    when "x"
-      "(#{@left.to_s} x #{@right.to_s})"
-    when "÷"
-      "(#{@left.to_s} ÷ #{@right.to_s})"
-    when "+"
-      "(#{@left.to_s} + #{@right.to_s})"
-    when "-"
-      "(#{@left.to_s} - #{@right.to_s})"
-    else
-      @value.to_s
-    end
+    operator = OPERATORS[@operator.to_sym]
+    return "(#{@left.to_s} #{@operator} #{@right.to_s})" if operator
+    @value.to_s
   end
 end
 
