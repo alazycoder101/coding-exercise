@@ -1,29 +1,26 @@
 # frozen_string_literal: true
 
-# Node: operation tree
+# Node: expression tree
 class Node
   OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
-  def initialize(value, operator=nil, left=nil, right=nil)
+  def initialize(value, operator = nil, left = nil, right = nil)
     @value = value
-    @operator = operator
+    @operator = operator&.to_sym
     @left = left
     @right = right
     validate
   end
 
   def validate
-    raise 'Invalid node' if @value.to_s.empty? && @operator.to_s.empty?
+    raise 'Invalid node' if @value.to_s.empty? == @operator.to_s.empty?
+
+    raise "Invalid operator: #{@operator}" if @operator && OPERATORS[@operator].nil?
 
     raise 'Invalid node' if @operator && !(@left && @right)
   end
 
   def result
-    if @operator && @left && @right
-      operator = OPERATORS[@operator.to_sym]
-      puts "Operator: #{@operator} not exist" and return unless operator
-
-      return @left.result.send(operator, @right.result)
-    end
+    return @left.result.send(OPERATORS[@operator], @right.result) if @operator && @left && @right
 
     @value.to_f
   end
@@ -60,5 +57,19 @@ def assert_equal(expected, actual)
   true
 end
 
+def assert_error(expected, block)
+  block.call
+  assert_equal false, true
+rescue StandardError => e
+  assert_equal(e.message, expected)
+end
+
 assert_equal '((7 + ((3 - 2) x 5)) ÷ 6)', tree.to_s
 assert_equal 2, tree.result
+
+tree = Node.new(6)
+assert_equal '6', tree.to_s
+assert_equal 6, tree.result
+
+assert_error('Invalid node', -> { Node.new(nil, '+') })
+assert_error('Invalid operator: /', -> { Node.new(nil, '/') })
