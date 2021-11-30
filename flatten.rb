@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 class Array
   def flatten
-    self.inject([]) do |result, element|
+    inject([]) do |result, element|
       if element.is_a?(Array)
         result + element.flatten
       else
