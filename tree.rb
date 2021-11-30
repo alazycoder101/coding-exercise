@@ -8,6 +8,13 @@ class Node
     @operator = operator
     @left = left
     @right = right
+    validate
+  end
+
+  def validate
+    raise 'Invalid node' if @value.to_s.empty? && @operator.to_s.empty?
+
+    raise 'Invalid node' if @operator && !(@left && @right)
   end
 
   def result
