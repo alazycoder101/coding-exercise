@@ -1,54 +1,55 @@
 # frozen_string_literal: true
 
-# Node: expression tree
-class Node
-  OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
-  def initialize(value, left = nil, right = nil)
+# ValueNode: expression tree
+class ValueNode
+  def initialize(value)
+    raise 'Invalid value' unless value.is_a?(Numeric)
     @value = value
-    @left = left
-    @right = right
-    validate
-  end
-
-  def validate
-    return if @value.is_a?(Numeric)
-
-    raise 'Invalid node' unless @left && @right
-
-    raise "Invalid operator: #{@value}" if OPERATORS[@value.to_sym].nil?
   end
 
   def result
-    return @left.result.send(OPERATORS[@value.to_sym], @right.result) if @left && @right
-
     @value.to_f
   end
 
-  def leaf?
-    !(@left && @right)
-  end
-
   def to_s
-    return "(#{@left} #{@value} #{@right})" unless leaf?
-
     @value.to_s
   end
 end
 
-tree = Node.new(
-  '÷',
-  Node.new(
+class OperationNode
+  OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
+  def initialize(left, operator, right)
+    @operator = operator.to_sym
+    raise 'Invalid operator' unless OPERATORS.keys.include?(@operator)
+
+    @left = left
+    @right = right
+  end
+
+  def result
+    @left.result.send(OPERATORS[@operator], @right.result)
+  end
+
+  def to_s
+    "(#{@left} #{@operator} #{@right})"
+  end
+end
+
+tree = OperationNode.new(
+  OperationNode.new(
+    ValueNode.new(7),
     '+',
-    Node.new(7),
-    Node.new(
+    OperationNode.new(
+      OperationNode.new(
+               ValueNode.new(3),
+               '-',
+               ValueNode.new(2)),
       'x',
-      Node.new('-',
-               Node.new(3),
-               Node.new(2)),
-      Node.new(5)
+      ValueNode.new(5)
     )
   ),
-  Node.new(6)
+  '÷',
+  ValueNode.new(6)
 )
 
 def assert_equal(expected, actual)
@@ -67,9 +68,9 @@ end
 assert_equal '((7 + ((3 - 2) x 5)) ÷ 6)', tree.to_s
 assert_equal 2, tree.result
 
-tree = Node.new(6)
+tree = ValueNode.new(6)
 assert_equal '6', tree.to_s
 assert_equal 6, tree.result
 
-assert_error('Invalid node', -> { Node.new('+') })
-assert_error('Invalid operator: /', -> { Node.new('/', Node.new(1), Node.new(9)) })
+assert_error('Invalid value', -> { ValueNode.new('+') })
+assert_error('Invalid operator', -> { OperationNode.new( ValueNode.new(1), '/', ValueNode.new(9)) })
