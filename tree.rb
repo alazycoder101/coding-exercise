@@ -2,6 +2,7 @@
 
 # ValueNode: expression tree
 class ValueNode
+  attr_reader :value
   def initialize(value)
     raise 'Invalid value' unless value.is_a?(Numeric)
     @value = value
@@ -16,22 +17,42 @@ class ValueNode
   end
 end
 
-class OperationNode
+class Processor
   OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
+  def self.check_operator(operator)
+    raise 'Invalid operator' unless OPERATORS.keys.include?(operator.to_sym)
+  end
+
+  def self.process(node)
+    node.left.result.send(OPERATORS[node.operator], node.right.result)
+  end
+end
+
+class Presenter
+  def self.show(node)
+    return "(#{node.left} #{node.operator} #{node.right})" if node.is_a?(OperationNode)
+
+    node.value.to_s
+  end
+end
+
+class OperationNode
+  attr_reader :left, :right, :operator
+
   def initialize(left, operator, right)
+    Processor.check_operator(operator)
     @operator = operator.to_sym
-    raise 'Invalid operator' unless OPERATORS.keys.include?(@operator)
 
     @left = left
     @right = right
   end
 
   def result
-    @left.result.send(OPERATORS[@operator], @right.result)
+    Processor.process(self)
   end
 
   def to_s
-    "(#{@left} #{@operator} #{@right})"
+    Presenter.show(self)
   end
 end
 
