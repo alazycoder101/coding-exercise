@@ -3,46 +3,46 @@
 # Node: expression tree
 class Node
   OPERATORS = { '+': '+', '-': '-', 'x': '*', '÷': '/' }.freeze
-  def initialize(value, operator = nil, left = nil, right = nil)
+  def initialize(value, left = nil, right = nil)
     @value = value
-    @operator = operator&.to_sym
     @left = left
     @right = right
     validate
   end
 
   def validate
-    raise 'Invalid node' if @value.to_s.empty? == @operator.to_s.empty?
+    return if @value.is_a?(Numeric)
 
-    raise "Invalid operator: #{@operator}" if @operator && OPERATORS[@operator].nil?
+    raise 'Invalid node' unless @left && @right
 
-    raise 'Invalid node' if @operator && !(@left && @right)
+    raise "Invalid operator: #{@value}" if OPERATORS[@value.to_sym].nil?
   end
 
   def result
-    return @left.result.send(OPERATORS[@operator], @right.result) if @operator && @left && @right
+    return @left.result.send(OPERATORS[@value.to_sym], @right.result) if @left && @right
 
     @value.to_f
   end
 
+  def leaf?
+    !(@left && @right)
+  end
+
   def to_s
-    return "(#{@left} #{@operator} #{@right})" if @operator
+    return "(#{@left} #{@value} #{@right})" unless leaf?
 
     @value.to_s
   end
 end
 
 tree = Node.new(
-  nil,
   '÷',
   Node.new(
-    nil,
     '+',
     Node.new(7),
     Node.new(
-      nil,
       'x',
-      Node.new(nil, '-',
+      Node.new('-',
                Node.new(3),
                Node.new(2)),
       Node.new(5)
@@ -71,5 +71,5 @@ tree = Node.new(6)
 assert_equal '6', tree.to_s
 assert_equal 6, tree.result
 
-assert_error('Invalid node', -> { Node.new(nil, '+') })
-assert_error('Invalid operator: /', -> { Node.new(nil, '/') })
+assert_error('Invalid node', -> { Node.new('+') })
+assert_error('Invalid operator: /', -> { Node.new('/', Node.new(1), Node.new(9)) })
